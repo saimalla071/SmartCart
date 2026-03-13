@@ -1,10 +1,9 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JSON Shopping Cart Manager</title>
+<title>SmartCart</title>
 
 <style>
 
@@ -64,18 +63,32 @@ box-shadow:0 2px 8px rgba(0,0,0,0.1);
 text-align:center;
 }
 
-.product button{
-margin-top:10px;
-padding:10px;
-border:none;
-background:#27ae60;
-color:white;
-cursor:pointer;
-border-radius:5px;
+.product button,
+.product-controls button{
+    margin-top:10px;
+    padding:10px;
+    border:none;
+    background:#27ae60;
+    color:white;
+    cursor:pointer;
+    border-radius:5px;
 }
 
-.product button:hover{
-background:#219150;
+.product button:hover,
+.product-controls button:hover{
+    background:#219150;
+}
+
+.product-controls{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+}
+
+.product-controls .qty{
+    min-width:20px;
+    text-align:center;
 }
 
 .cart{
@@ -107,13 +120,71 @@ border-radius:5px;
 }
 
 .clear{
-margin-top:10px;
-background:#e74c3c;
-color:white;
-padding:10px 15px;
-border:none;
-cursor:pointer;
-border-radius:5px;
+    margin-top:10px;
+    background:#e74c3c;
+    color:white;
+    padding:10px 15px;
+    border:none;
+    cursor:pointer;
+    border-radius:5px;
+}
+
+.checkout{
+    margin-top:10px;
+    background:#2980b9;
+    color:white;
+    padding:10px 15px;
+    border:none;
+    cursor:pointer;
+    border-radius:5px;
+    margin-left:10px;
+}
+
+.checkout-overlay{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background:rgba(0,0,0,0.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+}
+
+.checkout-card{
+    background:#eee;
+    padding:20px;
+    border-radius:10px;
+    width:90%;
+    max-width:500px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.2);
+    text-align:center;
+}
+
+.checkout-card table{
+    width:100%;
+    margin-bottom:20px;
+    border-collapse:collapse;
+}
+
+.checkout-card th, .checkout-card td{
+    padding:8px;
+    border-bottom:1px solid #ccc;
+}
+
+.pay{
+    background:#27ae60;
+    color:white;
+    padding:10px 20px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.pay:hover{
+    background:#219150;
 }
 
 .summary{
@@ -137,7 +208,8 @@ font-weight:bold;
 <body>
 
 <header>
-<h1>JSON Shopping Cart Manager</h1>
+<h1>Welcome to SmartCart</h1>
+<h3>JSON Shopping Cart Manager</h3>
 </header>
 
 <div class="container">
@@ -146,28 +218,36 @@ font-weight:bold;
 
 <div class="product-list">
 
-<div class="product">
-<h3>Laptop</h3>
-<p>₹55000</p>
-<button onclick="addToCart('Laptop',55000)">Add to Cart</button>
+<div class="product" data-name="Laptop" data-price="55000">
+    <h3>Laptop</h3>
+    <p>₹55000</p>
+    <div class="product-controls">
+        <button class="add-btn" onclick="addToCart('Laptop',55000)">Add to Cart</button>
+    </div>
 </div>
 
-<div class="product">
-<h3>Smartphone</h3>
-<p>₹25000</p>
-<button onclick="addToCart('Smartphone',25000)">Add to Cart</button>
+<div class="product" data-name="Smartphone" data-price="25000">
+    <h3>Smartphone</h3>
+    <p>₹25000</p>
+    <div class="product-controls">
+        <button class="add-btn" onclick="addToCart('Smartphone',25000)">Add to Cart</button>
+    </div>
 </div>
 
-<div class="product">
-<h3>Headphones</h3>
-<p>₹3000</p>
-<button onclick="addToCart('Headphones',3000)">Add to Cart</button>
+<div class="product" data-name="Headphones" data-price="3000">
+    <h3>Headphones</h3>
+    <p>₹3000</p>
+    <div class="product-controls">
+        <button class="add-btn" onclick="addToCart('Headphones',3000)">Add to Cart</button>
+    </div>
 </div>
 
-<div class="product">
-<h3>Smartwatch</h3>
-<p>₹8000</p>
-<button onclick="addToCart('Smartwatch',8000)">Add to Cart</button>
+<div class="product" data-name="Smartwatch" data-price="8000">
+    <h3>Smartwatch</h3>
+    <p>₹8000</p>
+    <div class="product-controls">
+        <button class="add-btn" onclick="addToCart('Smartwatch',8000)">Add to Cart</button>
+    </div>
 </div>
 
 </div>
@@ -183,6 +263,8 @@ font-weight:bold;
 <tr>
 <th>Product</th>
 <th>Price</th>
+<th>Qty</th>
+<th>Total</th>
 <th>Remove</th>
 </tr>
 </thead>
@@ -204,7 +286,23 @@ font-weight:bold;
 </div>
 
 <button class="clear" onclick="clearCart()">Clear Cart</button>
+<button class="checkout" onclick="showCheckout()">Checkout</button>
 
+</div>
+
+<!-- checkout overlay/card -->
+<div id="checkout" class="checkout-overlay" style="display:none;">
+    <div class="checkout-card">
+        <h2>Order Summary</h2>
+        <table id="checkoutTable">
+            <thead>
+                <tr><th>Product</th><th>Qty</th><th>Total</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <p class="checkout-total">Total Amount: ₹<span id="checkoutTotal">0</span></p>
+        <button class="pay" onclick="payNow()">Pay</button>
+    </div>
 </div>
 
 </div>
@@ -213,32 +311,41 @@ font-weight:bold;
 
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-
 function saveCart(){
-localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem("cart", JSON.stringify(cart));
 }
 
+function addToCart(name, price){
+    // increment if exists
+    let item = cart.find(i => i.name === name);
+    if(item){
+        item.qty++;
+    } else {
+        cart.push({name: name, price: price, qty: 1});
+    }
+    saveCart();
+    displayCart();
+    updateProductControls();
+}
 
-function addToCart(name,price){
-
-cart.push({
-name:name,
-price:price
-});
-
-saveCart();
-displayCart();
-
+function changeQuantity(name, delta){
+    let idx = cart.findIndex(i => i.name === name);
+    if(idx === -1) return;
+    cart[idx].qty += delta;
+    if(cart[idx].qty <= 0){
+        cart.splice(idx, 1);
+    }
+    saveCart();
+    displayCart();
+    updateProductControls();
 }
 
 
 function removeItem(index){
-
-cart.splice(index,1);
-
-saveCart();
-displayCart();
-
+    cart.splice(index,1);
+    saveCart();
+    displayCart();
+    updateProductControls();
 }
 
 
@@ -252,52 +359,80 @@ displayCart();
 
 
 function displayCart(){
-
-const tbody = document.querySelector("#cartTable tbody");
-
-tbody.innerHTML="";
-
-let subtotal=0;
-
-cart.forEach((item,index)=>{
-
-subtotal += item.price;
-
-let row = `
+    const tbody = document.querySelector("#cartTable tbody");
+    tbody.innerHTML = "";
+    let subtotal = 0;
+    cart.forEach((item, index) => {
+        subtotal += item.price * item.qty;
+        let row = `
 <tr>
 <td>${item.name}</td>
 <td>₹${item.price}</td>
+<td>${item.qty}</td>
+<td>₹${(item.price * item.qty).toFixed(2)}</td>
 <td><button class="remove" onclick="removeItem(${index})">Delete</button></td>
 </tr>
 `;
+        tbody.innerHTML += row;
+    });
 
-tbody.innerHTML += row;
-
-});
-
-let discount=0;
-
-if(subtotal>10000){
-
-discount = subtotal * 0.05;
-
+    let discount = 0;
+    if(subtotal > 10000){
+        discount = subtotal * 0.05;
+    }
+    let total = subtotal - discount;
+    document.getElementById("subtotal").innerText = subtotal.toFixed(2);
+    document.getElementById("discount").innerText = discount.toFixed(2);
+    document.getElementById("total").innerText = total.toFixed(2);
 }
 
-let total = subtotal - discount;
+function updateProductControls(){
+    document.querySelectorAll('.product').forEach(div => {
+        let name = div.getAttribute('data-name');
+        let price = parseFloat(div.getAttribute('data-price'));
+        let item = cart.find(i => i.name === name);
+        let controls = div.querySelector('.product-controls');
+        if(item){
+            controls.innerHTML = `
+<button onclick="changeQuantity('${name}', -1)">-</button>
+<span class="qty">${item.qty}</span>
+<button onclick="changeQuantity('${name}', 1)">+</button>
+`;
+        } else {
+            controls.innerHTML = `<button class="add-btn" onclick="addToCart('${name}',${price})">Add to Cart</button>`;
+        }
+    });
+}
 
-document.getElementById("subtotal").innerText = subtotal;
+function showCheckout(){
+    const overlay = document.getElementById('checkout');
+    const tbody = document.querySelector('#checkoutTable tbody');
+    tbody.innerHTML = '';
+    let subtotal = 0;
+    cart.forEach(item => {
+        subtotal += item.price * item.qty;
+        let row = `<tr><td>${item.name}</td><td>${item.qty}</td><td>₹${(item.price * item.qty).toFixed(2)}</td></tr>`;
+        tbody.innerHTML += row;
+    });
+    // calculate discount same as displayCart
+    let discount = 0;
+    if(subtotal > 10000) discount = subtotal * 0.05;
+    let total = subtotal - discount;
+    document.getElementById('checkoutTotal').innerText = total.toFixed(2);
+    overlay.style.display = 'flex';
+}
 
-document.getElementById("discount").innerText = discount.toFixed(2);
-
-document.getElementById("total").innerText = total.toFixed(2);
-
+function payNow(){
+    alert('Proceeding to payment...');
+    // in real app redirect to payment gateway or another page
+    document.getElementById('checkout').style.display = 'none';
 }
 
 
 displayCart();
+updateProductControls();
 
 </script>
 
 </body>
 </html>
-```
